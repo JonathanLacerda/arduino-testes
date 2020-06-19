@@ -2,11 +2,15 @@ var express = require('express'); // Carregue a biblioteca que usaremos para con
 var five = require("johnny-five"); // Carregue a biblioteca node que nos permite comunicar com o Arduino pelo JS
 var board = new five.Board(); // Conecte-se ao Arduino usando essa biblioteca
 
+
 board.on("ready", function() { // Quando o computador estiver conectado ao Arduino
     // Salva a referência para o pino LED e pino analógico
     var LEDpin = new five.Pin(13);
     var analogPin = new five.Pin('A0');
     var app = express(); // E inicie esse servidor
+    var sensor = new five.Sensor();
+    var led = new five.Led();
+    
     app.get('/', function(req, res) { // o que acontece quando vamos a `/`
         console.log('Oi do `server.js`!');
         res.send("Oi do `server.js`!"); // Devolve um texto de resposta
@@ -37,9 +41,14 @@ board.on("ready", function() { // Quando o computador estiver conectado ao Ardui
         res.send("Agora o LED do pino 13 deve estar desligado."); // E diga ao usuário que ele deve estar desativado na página da Web
     });
     app.get('/led/on', function(req, res) { // O que acontece quando alguém vai para `/led/on`
-        console.log("Alguém me disse para ligar o led ...");
-        LEDpin.high(); // Defina o pino referido pela variável 'LEDpin` 'high'(ligado)
-        res.send("Agora o LED do pino 13 deve estar ligado.") // E diga ao usuário que ele deve estar ligado na página da Web
+
+            const slider = new sensor("A0");
+            const led = new led(11);
+
+            // Scale the sensor's value to the LED's brightness range
+            slider.on("data", () => {
+              led.brightness(slider.scaleTo([0, 255]));
+            });
     });
     app.listen(3000, function() { // Ligue o servidor web na porta 3000
         console.log("Servidor em http://localhost:3000!");
